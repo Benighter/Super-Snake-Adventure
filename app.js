@@ -42,6 +42,71 @@ const powers = [
     { type: 'reduce_size_80', color: '#9b59b6', duration: 0 }
 ];
 
+// --- Audio Context Initialization ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// --- Sound Effects ---
+
+// Function to create a simple tone
+function createTone(frequency, duration, volume = 0.5) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = 'sine'; // You can experiment with different waveforms
+    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration); // Fade out
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration);
+}
+
+// Example sound effects
+function playEatFoodSound() {
+    createTone(440, 0.1, 0.3); // A higher-pitched tone for eating food
+}
+
+function playGameOverSound() {
+    createTone(110, 0.5, 0.5); // A lower-pitched tone for game over
+}
+
+function playShootBulletSound() {
+    createTone(880, 0.05, 0.4); // A short, high-pitched tone for shooting
+}
+
+function playBossHitSound() {
+    createTone(220, 0.1, 0.6); // A lower-pitched tone for the boss being hit
+}
+
+function playBombExplosionSound() {
+    // Create a more complex explosion sound using noise and filters (example)
+    const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 seconds
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        noiseData[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = noiseBuffer;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+    filter.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 0.2);
+
+    noise.connect(filter);
+    filter.connect(audioCtx.destination);
+
+    noise.start();
+    noise.stop(audioCtx.currentTime + 0.2);
+}
+
 function initGame() {
     snake = [{ x: 200, y: 200 }];
     direction = { x: GRID_SIZE, y: 0 };
@@ -284,6 +349,7 @@ function moveSnake() {
         score += 10;
         document.getElementById('score').innerText = `Score: ${score}`;
         food = getRandomPosition();
+        playEatFoodSound();
 
         const originalHeadSize = GRID_SIZE;
         const enlargedHeadSize = GRID_SIZE * 1.2;
@@ -405,6 +471,7 @@ function checkCollision() {
                 defeatedBoss();
             } else {
                 createImpactEffect(bullet.x, bullet.y);
+                playBossHitSound();
             }
             bullets.splice(bulletIndex, 1);
         }
@@ -419,6 +486,7 @@ function checkCollision() {
                 defeatedBoss();
             } else {
                 createImpactEffect(bomb.x, bomb.y, '#f39c12');
+                playBombExplosionSound();
             }
             plantedBombs.splice(index, 1);
         }
@@ -482,6 +550,7 @@ function endGame() {
     clearTimeout(gameLoop);
     clearTimeout(bossSpawnTimer);
     updateLeaderboard(score);
+    playGameOverSound();
 
     const gameOverScreen = document.createElement('div');
     gameOverScreen.classList.add('game-over');
@@ -685,6 +754,8 @@ function shootBullet(angleOffset = 0) {
         ctx.clearRect(head.x, head.y, GRID_SIZE, GRID_SIZE);
         drawSnake(); // Redraw the head without the muzzle flash
     }, 50); // Adjust the duration (in milliseconds) as needed
+
+    playShootBulletSound();
 }
 
 function plantBomb() {
