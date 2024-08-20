@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Snake Adventure - Ultimate Boss Battle</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Boss Warning Message (outside the game container) -->
+    <div id="boss-warning">
+        <span style="color: red;">!!!</span> Boss Incoming! 
+    </div>
+
+    <div id="game-ui"> 
+        <div id="score">Score: 0</div>
+        <div id="boss-health">Boss: 100%</div>
+        <div id="power-up">Power: None</div>
+        <div id="bombs">Bombs: 3</div>
+        <div id="countdown"></div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="game-board"></canvas>
+        <div id="power-up-notification" style="display: none;"></div> 
+
+        <div id="pause-screen" style="display: none;">
+            <h2>Paused</h2>
+            <button id="resume-button">Resume</button>
+            <button id="quit-button">Quit to Menu</button>
+        </div>
+    </div>
+
+    <div id="main-menu">
+        <h1>Super Snake Adventure</h1>
+        <button id="start-button">Start Game</button>
+        <button id="leaderboard-button">Leaderboard</button>
+        <button id="instructions-button">Instructions</button>
+    </div>
+
+    <div id="instructions">
+        <div id="instruction-categories">
+            <button class="category-button" data-target="basic-controls">Basic Controls</button>
+            <button class="category-button" data-target="boss-battle">Boss Battle</button>
+            <button class="category-button" data-target="power-ups">Power-Ups</button>
+            <button class="category-button" data-target="gameplay">Gameplay</button>
+        </div>
+
+        <div id="instruction-content">
+            <div id="basic-controls" class="instruction-category">
+                <h2>Basic Controls</h2>
+                <p><b>Arrow Keys:</b> Control the snake's movement (Up, Down, Left, Right).</p> 
+            </div>
+
+            <div id="boss-battle" class="instruction-category">
+                <h2>Boss Battle</h2>
+                <p><b>Spacebar:</b> Shoot bullets at the boss to inflict damage.</p>
+                <p><b>B Key:</b> Plant a bomb near the boss. Bombs deal significant damage, but you have a limited supply!</p>
+            </div>
+
+            <div id="power-ups" class="instruction-category">
+                <h2>Power-Ups</h2>
+                <p>Collect power-ups to gain temporary advantages! Here's what each power-up does:</p>
+                <ul>
+                    <li><b>Invincibility (Yellow):</b> Makes you temporarily immune to collisions.</li>
+                    <li><b>Freeze (Blue):</b> Freezes the boss in place.</li>
+                    </ul>
+                <p><b>X Key:</b> Activate the currently held power-up.</p>
+            </div>
+
+            <div id="gameplay" class="instruction-category">
+                <h2>Gameplay</h2>
+                <p>Eat the food to grow longer and increase your score.</p> 
+                <p>Avoid colliding with yourself, the walls, or the boss.</p>
+                <p>Defeat bosses to earn bonus points and power-ups.</p>
+            </div>
+        </div>
+
+        <button id="back-to-menu-button-from-instructions">Back to Menu</button>
+    </div>
+
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <table id="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <button id="back-to-menu-button">Back to Menu</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
