@@ -37,9 +37,9 @@ let bossSpawnLocation;
 const powers = [
     { type: 'invincibility', color: '#f1c40f', duration: 10000 },
     { type: 'freeze', color: '#3498db', duration: 5000 },
-    { type: 'triple_shot', color: '#e74c3c', duration: 0 },
     { type: 'reduce_size_50', color: '#27ae60', duration: 0 },
-    { type: 'reduce_size_80', color: '#9b59b6', duration: 0 }
+    { type: 'reduce_size_80', color: '#9b59b6', duration: 0 },
+    { type: 'machine_gun', color: '#FF4500', duration: 10000 } 
 ];
 
 // --- Audio Context Initialization ---
@@ -272,22 +272,25 @@ function drawBullets() {
 
         // Draw the new SVG bullet
         const svgString = `
-        <svg width="${GRID_SIZE}" height="${GRID_SIZE}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <svg width="${GRID_SIZE}" height="${GRID_SIZE}" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <radialGradient id="bulletGradient" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#f1c40f" />
-                    <stop offset="100%" stop-color="#e67e22" />
+                <radialGradient id="bulletGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#f8d766" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="#f5b041" stop-opacity="0"/>
                 </radialGradient>
+                <linearGradient id="fireTrail" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#f0932b" />
+                    <stop offset="30%" stop-color="#ed7f11" />
+                    <stop offset="70%" stop-color="#e56b0f" />
+                    <stop offset="100%" stop-color="#d6550c" />
+                </linearGradient>
             </defs>
-            <circle cx="20" cy="20" r="15" fill="url(#bulletGradient)" stroke="#e67e22" stroke-width="2" />
-            <circle cx="20" cy="20" r="5" fill="#d35400" />
-            <g transform="translate(20, 20)">
-                <g transform="rotate(45)">
-                    <rect x="-1" y="-3" width="2" height="6" fill="#fff" />
-                </g>
-                <g transform="rotate(-45)">
-                    <rect x="-1" y="-3" width="2" height="6" fill="#fff" />
-                </g>
+            <g transform="translate(30, 30)">
+                <path d="M -15 -3 L -3 -3 L 0 -10 L 3 -3 L 15 -3 L 10 3 L 3 10 L 0 15 L -3 10 L -10 3 Z" 
+                      fill="url(#fireTrail)" stroke="#e67e22" stroke-width="1"/>
+                <circle cx="0" cy="0" r="10" fill="#d35400" stroke="#e67e22" stroke-width="2" />
+                <circle cx="0" cy="0" r="5" fill="#e74c3c" />
+                <circle cx="0" cy="0" r="18" fill="url(#bulletGlow)" /> 
             </g>
         </svg>`;
 
@@ -454,8 +457,8 @@ function checkCollision() {
     if (boss && head.x >= boss.x && head.x < boss.x + GRID_SIZE * 2 &&
         head.y >= boss.y && head.y < boss.y + GRID_SIZE * 2) {
         if (currentPower !== 'invincibility') {
-            endGame();
-        }
+            endGame(); 
+        } 
     }
 
     // Check for collision between bullets and the boss (with improved hitbox)
@@ -535,6 +538,11 @@ function defeatedBoss() {
     });
     plantedBombs = [];
 
+    // Check if no bombs were used to defeat the boss
+    if (bombs === 3) {
+        spawnPowerUp('machine_gun'); // Spawn rapid-fire power-up
+    }
+
     bossLevel++;
     clearTimeout(bossSpawnTimer);
     scheduleBossSpawn();
@@ -573,8 +581,19 @@ function endGame() {
     });
 }
 
-function spawnPowerUp() {
-    const powerUpType = Math.random() < 0.1 ? 'bomb' : powers[Math.floor(Math.random() * powers.length)].type;
+function spawnPowerUp(specificType = null) {
+    let powerUpType;
+    if (specificType) {
+        powerUpType = specificType;
+    } else {
+        // Adjust the probabilities here:
+        if (Math.random() < 0.3) { // 30% chance of machine gun
+            powerUpType = 'machine_gun';
+        } else {
+            powerUpType = powers[Math.floor(Math.random() * (powers.length - 1))].type; // Choose from other powers
+        }
+    }
+
     const powerUp = {
         x: getRandomPosition().x,
         y: getRandomPosition().y,
@@ -584,7 +603,7 @@ function spawnPowerUp() {
         powerUp.color = powers.find(p => p.type === powerUpType).color;
     }
 
-    // Add a timeout to remove the power-up after 10 seconds
+    // Add a timeout to remove the power-up after 5 seconds
     powerUp.timeoutId = setTimeout(() => {
         powerUps = powerUps.filter(p => p !== powerUp);
     }, 5000); // 5 seconds in milliseconds
@@ -612,7 +631,7 @@ function gameLoopFunction() {
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        if (gameOver) return; 
+        if (gameOver) return;
 
         if (isPaused) {
             resumeGame();
@@ -637,7 +656,7 @@ document.addEventListener('keydown', (e) => {
             if (direction.x === 0) direction = { x: GRID_SIZE, y: 0 };
             break;
         case ' ':
-            shootBullet();
+            shootBullet(); // Shoot a single bullet
             break;
         case 'b':
         case 'B':
@@ -688,16 +707,8 @@ function activatePower() {
                 boss.frozen = true;
                 setTimeout(() => {
                     boss.frozen = false;
-                }, powerUpObject.duration); 
+                }, powerUpObject.duration);
             }
-            break;
-        case 'triple_shot':
-            for (let i = -1; i <= 1; i++) {
-                shootBullet(i * Math.PI / 4);
-            }
-            currentPower = null;
-            updatePowerLabel();
-            powerUpNotification.style.display = 'none';
             break;
         case 'reduce_size_50':
         case 'reduce_size_80':
@@ -708,6 +719,48 @@ function activatePower() {
             updatePowerLabel();
             powerUpNotification.style.display = 'none';
             break;
+        case 'machine_gun': {
+            let isFiring = false;
+            const fireRate = 50;
+
+            const startFiring = () => {
+                if (!isFiring && !gameOver && !isPaused) {
+                    isFiring = true;
+                    const firingInterval = setInterval(() => {
+                        if (!isFiring || gameOver || isPaused) {
+                            clearInterval(firingInterval);
+                            return;
+                        }
+                        shootBullet();
+                    }, fireRate);
+                }
+            };
+
+            const stopFiring = () => {
+                isFiring = false;
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === ' ' && currentPower === 'machine_gun') {
+                    startFiring();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.key === ' ') {
+                    stopFiring();
+                }
+            });
+
+            setTimeout(() => {
+                stopFiring();
+                currentPower = null;
+                updatePowerLabel();
+                powerUpNotification.style.display = 'none';
+            }, powers.find(p => p.type === 'machine_gun').duration);
+
+            break;
+        }
     }
 }
 
@@ -730,19 +783,18 @@ function shootBullet(angleOffset = 0) {
     // Increased bullet speed (adjust this value as needed)
     const speed = GRID_SIZE * 2; // Twice the speed of the snake
 
-    const offsetX = Math.cos(angle - Math.PI / 2) * GRID_SIZE / 2;
-    const offsetY = Math.sin(angle - Math.PI / 2) * GRID_SIZE / 2;
+    // Bullet starting position (always the center of the head)
+    const bulletX = head.x + GRID_SIZE / 2;
+    const bulletY = head.y + GRID_SIZE / 2;
 
-    for (let i = -1; i <= 1; i++) {
-        bullets.push({
-            x: head.x + GRID_SIZE / 2 + i * offsetX,
-            y: head.y + GRID_SIZE / 2 + i * offsetY,
-            dx: Math.cos(angle) * speed,
-            dy: Math.sin(angle) * speed
-        });
-    }
+    bullets.push({
+        x: bulletX,
+        y: bulletY,
+        dx: Math.cos(angle) * speed,
+        dy: Math.sin(angle) * speed
+    });
 
-    // Add shooting animation (muzzle flash)
+    //    // Add shooting animation (muzzle flash)
     const muzzleFlashSize = GRID_SIZE / 2;
     ctx.fillStyle = '#f1c40f'; // Yellow for muzzle flash
     ctx.beginPath();
