@@ -2,16 +2,13 @@ const canvas = document.getElementById('game-board');
 const ctx = canvas.getContext('2d');
 const startButton = document.getElementById('start-button');
 const leaderboardButton = document.getElementById('leaderboard-button');
-const backToMenuButton = document.getElementById('back-to-menu-button');
 const instructionsButton = document.getElementById('instructions-button');
-const backToMenuButtonFromInstructions = document.getElementById('back-to-menu-button-from-instructions');
 const mainMenu = document.getElementById('main-menu');
 const leaderboard = document.getElementById('leaderboard');
 const leaderboardTable = document.getElementById('leaderboard-table');
 const bossWarning = document.getElementById('boss-warning');
 const countdownDisplay = document.getElementById('countdown');
 const instructions = document.getElementById('instructions');
-const powerUpNotification = document.getElementById('power-up-notification');
 
 // Pause Functionality
 let isPaused = false;
@@ -24,7 +21,7 @@ const GAME_SIZE = 400;
 canvas.width = GAME_SIZE;
 canvas.height = GAME_SIZE;
 
-let snake, direction, food, score, bossHealth, currentPower, boss, gameOver, gameLoop, powerUpTimer;
+let snake, direction, food, score, bossHealth, currentPower, boss, gameOver, gameLoop, powerUpTimer, countdownInterval;
 let bullets = [];
 let bombs = 3;
 let powerUps = [];
@@ -39,7 +36,7 @@ const powers = [
     { type: 'freeze', color: '#3498db', duration: 5000 },
     { type: 'reduce_size_50', color: '#27ae60', duration: 0 },
     { type: 'reduce_size_80', color: '#9b59b6', duration: 0 },
-    { type: 'machine_gun', color: '#FF4500', duration: 10000 } 
+    { type: 'machine_gun', color: '#FF4500', duration: 10000 }
 ];
 
 // --- Audio Context Initialization ---
@@ -52,7 +49,7 @@ function createTone(frequency, duration, volume = 0.5) {
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
 
-    oscillator.type = 'sine'; // You can experiment with different waveforms
+    oscillator.type = 'sine'; 
     oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
 
     gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
@@ -67,24 +64,23 @@ function createTone(frequency, duration, volume = 0.5) {
 
 // Example sound effects
 function playEatFoodSound() {
-    createTone(440, 0.1, 0.3); // A higher-pitched tone for eating food
+    createTone(440, 0.1, 0.3); 
 }
 
 function playGameOverSound() {
-    createTone(110, 0.5, 0.5); // A lower-pitched tone for game over
+    createTone(110, 0.5, 0.5); 
 }
 
 function playShootBulletSound() {
-    createTone(880, 0.05, 0.4); // A short, high-pitched tone for shooting
+    createTone(880, 0.05, 0.4); 
 }
 
 function playBossHitSound() {
-    createTone(220, 0.1, 0.6); // A lower-pitched tone for the boss being hit
+    createTone(220, 0.1, 0.6); 
 }
 
 function playBombExplosionSound() {
-    // Create a more complex explosion sound using noise and filters (example)
-    const bufferSize = audioCtx.sampleRate * 0.5; // 0.5 seconds
+    const bufferSize = audioCtx.sampleRate * 0.5; 
     const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     const noiseData = noiseBuffer.getChannelData(0);
 
@@ -108,6 +104,7 @@ function playBombExplosionSound() {
 }
 
 function initGame() {
+    // Reset game variables
     snake = [{ x: 200, y: 200 }];
     direction = { x: GRID_SIZE, y: 0 };
     food = getRandomPosition();
@@ -122,22 +119,34 @@ function initGame() {
     bossLevel = 1;
     plantedBombs = [];
     consecutiveBossDefeats = 0;
+    isPaused = false;
 
+    // Clear existing timeouts and intervals
+    clearTimeout(gameLoop);
+    clearTimeout(bossSpawnTimer);
+    clearInterval(countdownInterval);
+    clearInterval(powerUpTimer); // Clear any active power-up timers
+
+    // Clear the canvas
     ctx.clearRect(0, 0, GAME_SIZE, GAME_SIZE);
 
+    // Update UI elements
     document.getElementById('score').innerText = 'Score: 0';
     document.getElementById('boss-health').innerText = 'Boss: 100%';
     updatePowerLabel();
     document.getElementById('bombs').innerText = 'Bombs: 3';
     bossWarning.style.display = 'none';
-    powerUpNotification.style.display = 'none';
+    pauseScreen.style.display = 'none'; 
 
-    clearTimeout(bossSpawnTimer);
+    // Schedule initial boss spawn
     scheduleBossSpawn();
 
+    // Draw the initial snake and food
     drawSnake();
+    drawFood();
 
-    startCountdown();
+    updateHighScoreDisplay();
+    startCountdown(); // Start the countdown before the game loop
 }
 
 function startCountdown() {
@@ -145,7 +154,7 @@ function startCountdown() {
     countdownDisplay.innerText = countdown;
     countdownDisplay.style.display = 'block';
 
-    let countdownInterval = setInterval(() => {
+    countdownInterval = setInterval(() => { // Assign to global variable
         countdown--;
         countdownDisplay.innerText = countdown;
 
@@ -156,15 +165,20 @@ function startCountdown() {
         }
     }, 1000);
 
+    // Add event listener for skipping countdown (using a named function)
     document.addEventListener('keydown', skipCountdown);
+}
 
-    function skipCountdown(e) {
-        if (countdown > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-            clearInterval(countdownInterval);
-            countdownDisplay.style.display = 'none';
-            gameLoopFunction();
-            document.removeEventListener('keydown', skipCountdown);
-        }
+function skipCountdown(e) {
+    if (countdownDisplay.style.display === 'block' &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+
+        clearInterval(countdownInterval); // Clear interval when skipping
+        countdownDisplay.style.display = 'none';
+        gameLoopFunction();
+
+        // Remove the skipCountdown listener as soon as it's used
+        document.removeEventListener('keydown', skipCountdown);
     }
 }
 
@@ -197,7 +211,6 @@ function drawSnake() {
     });
 }
 
-
 function drawFood() {
     ctx.clearRect(food.x, food.y, GRID_SIZE, GRID_SIZE);
 
@@ -222,7 +235,6 @@ function drawFood() {
     };
     img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
 }
-
 
 function drawBoss() {
     if (boss) {
@@ -383,7 +395,7 @@ function moveSnake() {
                 document.getElementById('bombs').innerText = `Bombs: ${bombs}`;
             } else {
                 currentPower = powerUp.type;
-                updatePowerLabel();
+                updatePowerLabel(currentPower); 
             }
             return false;
         }
@@ -400,7 +412,7 @@ function showBossWarning() {
     drawSpawnEffect(bossSpawnLocation.x, bossSpawnLocation.y);
 
     setTimeout(() => {
-        bossWarning.style.display = 'none'; // Hide when boss spawns
+        bossWarning.style.display = 'none'; 
         spawnBoss(bossSpawnLocation);
     }, 3000);
 }
@@ -409,10 +421,10 @@ function spawnBoss(location) {
     boss = location;
     boss.moveCounter = 0;
     bossHealth = 100 + (bossLevel - 1) * 50;
-    updateBossHealthDisplay();
+    updateBossHealthDisplay(); 
 
     // Hide the boss warning as soon as the boss spawns
-    bossWarning.style.display = 'none'; 
+    bossWarning.style.display = 'none';
 }
 
 function moveBoss() {
@@ -423,7 +435,7 @@ function moveBoss() {
 
         const angle = Math.atan2(dy, dx);
 
-        const speed = GRID_SIZE / 4; 
+        const speed = GRID_SIZE / 4;
 
         const moveX = Math.cos(angle) * speed;
         const moveY = Math.sin(angle) * speed;
@@ -457,8 +469,8 @@ function checkCollision() {
     if (boss && head.x >= boss.x && head.x < boss.x + GRID_SIZE * 2 &&
         head.y >= boss.y && head.y < boss.y + GRID_SIZE * 2) {
         if (currentPower !== 'invincibility') {
-            endGame(); 
-        } 
+            endGame();
+        }
     }
 
     // Check for collision between bullets and the boss (with improved hitbox)
@@ -572,7 +584,7 @@ function endGame() {
 
     document.getElementById('restart-button').addEventListener('click', () => {
         document.getElementById('game-container').removeChild(gameOverScreen);
-        initGame();
+        initGame(); // Start a new game
     });
 
     document.getElementById('menu-button').addEventListener('click', () => {
@@ -612,167 +624,173 @@ function spawnPowerUp(specificType = null) {
 }
 
 function gameLoopFunction() {
-    if (gameOver) return;
+    if (gameOver) {
+        return; // Stop the loop if game over
+    }
 
-    ctx.clearRect(0, 0, GAME_SIZE, GAME_SIZE);
-    moveSnake();
-    if (boss) moveBoss();
-    moveBullets();
-    checkCollision();
-    drawSnake();
-    drawFood();
-    drawBoss();
-    drawBullets();
-    drawPowerUps();
-    drawPlantedBombs();
+    if (!isPaused) { // Only execute game logic if not paused
+        ctx.clearRect(0, 0, GAME_SIZE, GAME_SIZE); // Clear the canvas
+        moveSnake();                             // Move the snake
+        if (boss) moveBoss();                  // Move the boss (if it exists)
+        moveBullets();                          // Move the bullets
+        checkCollision();                       // Check for collisions
+        drawSnake();                             // Draw the snake
+        drawFood();                             // Draw the food
+        drawBoss();                             // Draw the boss (if it exists)
+        drawBullets();                          // Draw the bullets
+        drawPowerUps();                         // Draw any power-ups
+        drawPlantedBombs();                    // Draw any planted bombs
+    }
 
-    gameLoop = setTimeout(gameLoopFunction, 100);
+    gameLoop = setTimeout(gameLoopFunction, 100); // Schedule the next frame
 }
 
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        if (gameOver) return;
+    if (gameOver) return; // Don't process keys if game is over
 
+    if (e.key === 'Escape') {
         if (isPaused) {
             resumeGame();
         } else {
             pauseGame();
         }
-    }
-
-    if (isPaused) return; // Don't process other keys if paused
-
-    switch (e.key) {
-        case 'ArrowUp':
-            if (direction.y === 0) direction = { x: 0, y: -GRID_SIZE };
-            break;
-        case 'ArrowDown':
-            if (direction.y === 0) direction = { x: 0, y: GRID_SIZE };
-            break;
-        case 'ArrowLeft':
-            if (direction.x === 0) direction = { x: -GRID_SIZE, y: 0 };
-            break;
-        case 'ArrowRight':
-            if (direction.x === 0) direction = { x: GRID_SIZE, y: 0 };
-            break;
-        case ' ':
-            shootBullet(); // Shoot a single bullet
-            break;
-        case 'b':
-        case 'B':
-            if (boss && bombs > 0) {
-                plantBomb();
-            }
-            break;
-        case 'x':
-        case 'X':
-            if (currentPower) {
-                activatePower();
-            }
-            break;
+    } else if (!isPaused) { // Only process game keys if not paused
+        switch (e.key) {
+            case 'ArrowUp':
+                if (direction.y === 0) direction = { x: 0, y: -GRID_SIZE };
+                break;
+            case 'ArrowDown':
+                if (direction.y === 0) direction = { x: 0, y: GRID_SIZE };
+                break;
+            case 'ArrowLeft':
+                if (direction.x === 0) direction = { x: -GRID_SIZE, y: 0 };
+                break;
+            case 'ArrowRight':
+                if (direction.x === 0) direction = { x: GRID_SIZE, y: 0 };
+                break;
+            case ' ':
+                shootBullet(); // Shoot a single bullet
+                break;
+            case 'b':
+            case 'B':
+                if (boss && bombs > 0) {
+                    plantBomb();
+                }
+                break;
+            case 'x':
+            case 'X':
+                if (currentPower) {
+                    activatePower();
+                }
+                break;
+        }
     }
 });
 
 function activatePower() {
     const powerUpObject = powers.find(p => p.type === currentPower);
 
-    powerUpNotification.innerText = `${powerUpObject.type} Activated!`;
-    powerUpNotification.style.display = 'block';
-    powerUpNotification.style.color = powerUpObject.color;
-
-    if (powerUpObject.duration > 0) {
-        let timeRemaining = powerUpObject.duration / 1000;
-        powerUpTimer = setInterval(() => {
-            timeRemaining--;
-            powerUpNotification.innerText = `${powerUpObject.type} Activated! (${timeRemaining}s)`;
-            if (timeRemaining <= 0) {
-                clearInterval(powerUpTimer);
-                powerUpNotification.style.display = 'none';
-                currentPower = null;
-                updatePowerLabel();
-
-                if (powerUpObject.type === 'freeze' && boss) {
-                    boss.frozen = false;
-                }
-            }
-        }, 1000);
-    }
-
     switch (currentPower) {
         case 'invincibility':
             snake.invincible = true;
-            break;
+            // Intentional fallthrough to apply timer logic
         case 'freeze':
             if (boss) {
                 boss.frozen = true;
-                setTimeout(() => {
-                    boss.frozen = false;
-                }, powerUpObject.duration);
+            }
+            // Intentional fallthrough to apply timer logic
+        case 'machine_gun':
+            if (powerUpObject.duration > 0) {
+                let timeRemaining = powerUpObject.duration / 1000;
+                updatePowerLabel(powerUpObject.type, timeRemaining);
+
+                powerUpTimer = setInterval(() => {
+                    timeRemaining--;
+                    updatePowerLabel(powerUpObject.type, timeRemaining);
+
+                    if (timeRemaining <= 0) {
+                        clearInterval(powerUpTimer);
+
+                        if (powerUpObject.type === 'freeze' && boss) {
+                            boss.frozen = false;
+                        }
+
+                        if (powerUpObject.type === 'machine_gun') {
+                            isFiring = false;
+                        }
+
+                        currentPower = null; // Reset currentPower after the timer ends
+                        updatePowerLabel();
+                    }
+                }, 1000);
+            }
+
+            if (currentPower === 'machine_gun') {
+                let isFiring = false;
+                const fireRate = 50;
+
+                const startFiring = () => {
+                    if (!isFiring && !gameOver && !isPaused) {
+                        isFiring = true;
+                        const firingInterval = setInterval(() => {
+                            if (!isFiring || gameOver || isPaused) {
+                                clearInterval(firingInterval);
+                                return;
+                            }
+                            shootBullet();
+                        }, fireRate);
+                    }
+                };
+
+                const stopFiring = () => {
+                    isFiring = false;
+                };
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === ' ' && currentPower === 'machine_gun') {
+                        startFiring();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    if (e.key === ' ') {
+                        stopFiring();
+                    }
+                });
             }
             break;
+
         case 'reduce_size_50':
         case 'reduce_size_80':
             const reductionAmount = Math.floor(snake.length * (powerUpObject.type === 'reduce_size_50' ? 0.5 : 0.8));
             const segmentsToRemove = Math.min(reductionAmount, snake.length - 1);
             snake.splice(1, segmentsToRemove);
-            currentPower = null;
+            currentPower = null; // These power-ups don't need a timer
             updatePowerLabel();
-            powerUpNotification.style.display = 'none';
             break;
-        case 'machine_gun': {
-            let isFiring = false;
-            const fireRate = 50;
-
-            const startFiring = () => {
-                if (!isFiring && !gameOver && !isPaused) {
-                    isFiring = true;
-                    const firingInterval = setInterval(() => {
-                        if (!isFiring || gameOver || isPaused) {
-                            clearInterval(firingInterval);
-                            return;
-                        }
-                        shootBullet();
-                    }, fireRate);
-                }
-            };
-
-            const stopFiring = () => {
-                isFiring = false;
-            };
-
-            window.addEventListener('keydown', (e) => {
-                if (e.key === ' ' && currentPower === 'machine_gun') {
-                    startFiring();
-                }
-            });
-
-            window.addEventListener('keyup', (e) => {
-                if (e.key === ' ') {
-                    stopFiring();
-                }
-            });
-
-            setTimeout(() => {
-                stopFiring();
-                currentPower = null;
-                updatePowerLabel();
-                powerUpNotification.style.display = 'none';
-            }, powers.find(p => p.type === 'machine_gun').duration);
-
-            break;
-        }
     }
 }
 
-function updatePowerLabel() {
+function updatePowerLabel(powerType = null, time = null) {
     const powerUpLabel = document.getElementById('power-up');
-    if (currentPower) {
-        const powerUpObject = powers.find(p => p.type === currentPower);
+    const powerUpTimerLabel = document.getElementById('power-up-timer');
+
+    if (powerType) {
+        const powerUpObject = powers.find(p => p.type === powerType);
         powerUpLabel.innerText = `Power: ${powerUpObject.type}`;
         powerUpLabel.style.color = powerUpObject.color;
+
+        // Update the timer label (if applicable)
+        if (time !== null) {
+            powerUpTimerLabel.innerText = `(${time}s)`;
+            powerUpTimerLabel.style.display = 'block';
+        } else {
+            powerUpTimerLabel.style.display = 'none';
+        }
     } else {
         powerUpLabel.innerText = 'Power: None';
         powerUpLabel.style.color = '#3498db';
+        powerUpTimerLabel.style.display = 'none';
     }
 }
 
@@ -780,10 +798,10 @@ function shootBullet(angleOffset = 0) {
     const head = snake[0];
     const angle = Math.atan2(direction.y, direction.x) + angleOffset;
 
-    // Increased bullet speed (adjust this value as needed)
-    const speed = GRID_SIZE * 2; // Twice the speed of the snake
+    // Increased bullet speed 
+    const speed = GRID_SIZE * 2; 
 
-    // Bullet starting position (always the center of the head)
+    // Bullet starting position 
     const bulletX = head.x + GRID_SIZE / 2;
     const bulletY = head.y + GRID_SIZE / 2;
 
@@ -794,9 +812,9 @@ function shootBullet(angleOffset = 0) {
         dy: Math.sin(angle) * speed
     });
 
-    //    // Add shooting animation (muzzle flash)
+    // Add shooting animation (muzzle flash)
     const muzzleFlashSize = GRID_SIZE / 2;
-    ctx.fillStyle = '#f1c40f'; // Yellow for muzzle flash
+    ctx.fillStyle = '#f1c40f'; 
     ctx.beginPath();
     ctx.arc(head.x + GRID_SIZE / 2, head.y + GRID_SIZE / 2, muzzleFlashSize, 0, 2 * Math.PI);
     ctx.fill();
@@ -805,7 +823,7 @@ function shootBullet(angleOffset = 0) {
     setTimeout(() => {
         ctx.clearRect(head.x, head.y, GRID_SIZE, GRID_SIZE);
         drawSnake(); // Redraw the head without the muzzle flash
-    }, 50); // Adjust the duration (in milliseconds) as needed
+    }, 50); 
 
     playShootBulletSound();
 }
@@ -823,9 +841,9 @@ function updateBossHealthDisplay() {
     const bossHealthElement = document.getElementById('boss-health');
     if (boss) {
         bossHealthElement.innerText = `Boss: ${bossHealth}%`;
-        bossHealthElement.style.display = 'block';
+        bossHealthElement.style.display = 'block'; 
     } else {
-        bossHealthElement.style.display = 'none';
+        bossHealthElement.style.display = 'none'; 
     }
 }
 
@@ -856,10 +874,34 @@ function saveLeaderboardData(data) {
 
 function updateLeaderboard(newScore) {
     let leaderboardData = getLeaderboardData();
-    leaderboardData.push({ score: newScore });
-    leaderboardData.sort((a, b) => b.score - a.score);
-    leaderboardData = leaderboardData.slice(0, 10);
-    saveLeaderboardData(leaderboardData);
+    const isHighScore = leaderboardData.length < 10 || newScore > leaderboardData[leaderboardData.length - 1].score;
+
+    if (isHighScore) {
+        // Show the name entry modal
+        const modal = document.getElementById('name-entry-modal');
+        modal.style.display = 'flex';
+
+        document.getElementById('submit-name-button').addEventListener('click', () => {
+            const playerName = document.getElementById('player-name-input').value || "Anonymous";
+            leaderboardData.push({ name: playerName, score: newScore });
+            leaderboardData.sort((a, b) => b.score - a.score);
+            leaderboardData = leaderboardData.slice(0, 10);
+            saveLeaderboardData(leaderboardData);
+            displayLeaderboard();
+            modal.style.display = 'none'; // Hide the modal after submitting
+
+            // Remove the high score display if the new score is higher
+            if (newScore > leaderboardData[0].score) {
+                document.getElementById('high-score').style.display = 'none';
+            }
+        });
+    }
+}
+
+function updateHighScoreDisplay() {
+    const leaderboardData = getLeaderboardData();
+    const highScore = leaderboardData.length > 0 ? leaderboardData[0].score : 0;
+    document.getElementById('high-score').innerText = `High Score: ${highScore}`;
 }
 
 function displayLeaderboard() {
@@ -869,8 +911,10 @@ function displayLeaderboard() {
     leaderboardData.forEach((entry, index) => {
         const row = tbody.insertRow();
         const rankCell = row.insertCell();
+        const nameCell = row.insertCell(); 
         const scoreCell = row.insertCell();
         rankCell.innerText = index + 1;
+        nameCell.innerText = entry.name; 
         scoreCell.innerText = entry.score;
     });
 }
@@ -879,6 +923,9 @@ function showInstructions() {
     mainMenu.style.display = 'none';
     instructions.style.display = 'block';
     instructions.classList.add('fade-in');
+
+    // Add event listener for Esc key to go back to main menu
+    document.addEventListener('keydown', handleEscKey);
 }
 
 function showMainMenu() {
@@ -887,6 +934,8 @@ function showMainMenu() {
     leaderboard.style.display = 'none';
     instructions.style.display = 'none';
     document.getElementById('game-container').style.display = 'none';
+
+    document.removeEventListener('keydown', handleEscKey);
 }
 
 function showGame() {
@@ -902,6 +951,14 @@ function showLeaderboard() {
     leaderboard.style.display = 'block';
     leaderboard.classList.add('fade-in');
     displayLeaderboard();
+
+    document.addEventListener('keydown', handleEscKey);
+}
+
+function handleEscKey(e) {
+    if (e.key === 'Escape') {
+        showMainMenu();
+    }
 }
 
 startButton.addEventListener('click', () => {
@@ -910,9 +967,7 @@ startButton.addEventListener('click', () => {
 });
 
 leaderboardButton.addEventListener('click', showLeaderboard);
-backToMenuButton.addEventListener('click', showMainMenu);
 instructionsButton.addEventListener('click', showInstructions);
-backToMenuButtonFromInstructions.addEventListener('click', showMainMenu);
 
 showMainMenu();
 
@@ -951,14 +1006,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function pauseGame() {
     isPaused = true;
-    clearTimeout(gameLoop);
+    clearTimeout(gameLoop); // Clear the existing timeout when pausing
     pauseScreen.style.display = 'block';
 }
 
 function resumeGame() {
     isPaused = false;
     pauseScreen.style.display = 'none';
-    gameLoopFunction();
+    gameLoopFunction(); // Restart the loop when resuming
 }
 
 resumeButton.addEventListener('click', resumeGame);

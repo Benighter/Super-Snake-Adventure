@@ -14,29 +14,44 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 200px; 
-    padding: 10px;
+    width: 250px; /* Increased width */
+    padding: 15px; /* Increased padding */
     background-color: #34495e;
     border: 5px solid #ecf0f1;
     border-radius: 10px;
     color: #ecf0f1;
     font-size: 16px;
-    margin-right: 20px; 
+    margin-right: 20px;
+    position: relative; /* To allow absolute positioning of the notification */
+    text-align: center; /* Center all text within the UI box */
 }
 
-#game-ui > div {
+#power-up-timer {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 10px; 
+    color: #ecf0f1;
+    display: none; /* Initially hidden, will be shown by JavaScript */
+}
+
+#game-ui > div { /* Target all divs inside #game-ui */
+    text-align: center;
+    margin-bottom: 10px; 
+    color: #ecf0f1; /* Set the default color to match other UI text */
+}
+
+#high-score {
+    margin-bottom: 0; 
 }
 
 #game-container {
-    position: relative;
-    width: 90vmin;  
-    height: 90vmin; 
+    position: relative; /* Make game-container a positioned parent */
+    width: 90vmin;
+    height: 90vmin;
     background-color: #34495e;
     border: 5px solid #ecf0f1;
     border-radius: 10px;
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+    margin-top: 50px; /* Add top margin to make space for the boss warning */
 }
 
 #game-board {
@@ -45,13 +60,30 @@ body {
 }
 
 #power-up-notification {
+    position: absolute;
+    bottom: -35px; 
+    left: 0;
+    width: 100%; 
     background-color: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    padding: 10px 20px;
+    color: #fff; 
+    padding: 5px 10px; 
     border-radius: 5px;
-    margin-bottom: 10px; 
-    font-size: 1.2em;
-    display: none; 
+    font-size: 0.9em; 
+    text-align: center;
+    z-index: 2; 
+    display: none; /* You can remove this if you're not using it for anything else */
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+
+#power-up {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #3498db; /* Default color, can be changed by JavaScript */
+    white-space: wrap; /* Prevent wrapping of power-up name and timer */
+    overflow: hidden; /* Hide overflow if the text is too long */
+    text-overflow: ellipsis; /* Add ellipsis (...) if the text overflows */
 }
 
 .game-over {
@@ -100,6 +132,63 @@ body {
     transform: translateY(-3px); 
 }
 
+/* Name Entry Modal Styles */
+#name-entry-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 11; /* Ensure it's above other elements */
+}
+
+#name-entry-modal .modal-content {
+    background-color: #34495e;
+    border: 5px solid #ecf0f1;
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+    padding: 30px;
+    text-align: center;
+}
+
+#name-entry-modal h2 {
+    font-size: 2em;
+    color: #e74c3c;
+    margin-bottom: 20px;
+}
+
+#name-entry-modal input[type="text"] {
+    padding: 10px;
+    font-size: 1.2em;
+    border: 2px solid #ecf0f1;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#name-entry-modal button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+#name-entry-modal button:hover {
+    background-color: #27ae60;
+    transform: translateY(-3px);
+}
+
+/* Instruction Styles */
 #instructions {
     position: absolute;
     top: 50%;
@@ -109,33 +198,141 @@ body {
     border: 5px solid #ecf0f1;
     border-radius: 10px;
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
-    padding: 30px;
+    padding: 20px; /* Adjusted padding */
     text-align: center;
-    display: none; 
-    z-index: 11; 
-    overflow-y: auto; 
-    max-height: 80vh;
-    width: 80vw; 
-    max-width: 600px;
+    display: none;
+    z-index: 11;
+    overflow-y: hidden; /* Remove the vertical scrollbar */
+    width: 90vw; /* Occupy 90% of the screen width */
+    max-width: 600px; /* But not wider than 600px */
+    max-height: 80vh; /* Occupy at most 80% of the screen height */
+    font-family: 'Press Start 2P', cursive; /* Consistent font */
 }
 
 #instructions h2 {
-    font-size: 2em;
+    font-size: 1.8em; /* Slightly larger headings */
+    color: #e74c3c; /* Consistent heading color */
+    margin-bottom: 15px;
+}
+
+#instructions p, #instructions li {
+    font-size: 1.1em; /* Slightly reduced font size */
     color: #ecf0f1;
+    line-height: 1.6;
+    margin-bottom: 10px; /* Add spacing between paragraphs/list items */
+}
+
+#instructions b { /* Style for bold text */
+    color: #f1c40f; /* Example: Yellow for emphasis */
+}
+
+#instructions ul {
+    list-style-type: disc; /* Use bullet points for lists */
+    padding-left: 40px; /* Indent the list */
+}
+
+#instruction-categories {
+    display: flex;
+    justify-content: center;
     margin-bottom: 20px;
 }
 
-#instructions p {
-    font-size: 1.2em;
+.category-button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 1em; /* Slightly reduced font size */
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.category-button:hover {
+    background-color: #27ae60;
+}
+
+.category-button.active {
+    background-color: #27ae60; /* Highlight the active category */
+}
+
+.instruction-category {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    background-color: rgba(52, 73, 94, 0.8);
+    display: none;
+}
+
+.instruction-category.active {
+    display: block; /* Show the active category content */
+}
+
+.instruction-category h2 {
+    font-size: 1.5em;
+    color: #e74c3c;
+    margin-bottom: 10px;
+}
+
+.instruction-category p {
+    font-size: 1em; /* Slightly reduced font size */
     color: #ecf0f1;
     line-height: 1.6;
 }
 
+.instruction-category ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.instruction-category li {
+    margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+    #instruction-categories {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .category-button {
+        margin: 10px 0;
+    }
+}
+
+#back-to-menu-button-from-instructions {
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+#back-to-menu-button-from-instructions:hover {
+    background-color: #27ae60;
+    transform: translateY(-3px);
+}
+
+#boss-health {
+    display: none; /* Initially hidden */
+    text-align: center;
+    margin-bottom: 10px;
+    color: #ecf0f1;
+}
+
 #boss-warning {
-    position: absolute; /* Position relative to the game container */
-    top: 10px; /* 10px from the top of the game container */
+    position: absolute; 
+    top: 0; /* Align to the top of the page */
     left: 50%;
     transform: translateX(-50%); /* Center horizontally */
+    width: 100%; /* Make it as wide as the viewport */
     background-color: rgba(255, 0, 0, 0.7);
     color: white;
     padding: 10px 20px;
@@ -146,6 +343,19 @@ body {
     display: none;
     animation: flash 1s infinite;
     z-index: 100;
+    text-align: center; /* Center the text */
+    box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+#game-container {
+    position: relative; /* Make game-container a positioned parent */
+    width: 90vmin;  
+    height: 90vmin; 
+    background-color: #34495e;
+    border: 5px solid #ecf0f1;
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+    margin-top: 50px; /* Add top margin to make space for the boss warning */ 
 }
 
 @keyframes flash {
@@ -193,7 +403,8 @@ body {
     transform: translateY(-3px);
 }
 
-#leaderboard {
+/* Instruction Styles */
+#instructions {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -202,89 +413,37 @@ body {
     border: 5px solid #ecf0f1;
     border-radius: 10px;
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
-    padding: 30px;
+    padding: 20px; /* Adjusted padding */
     text-align: center;
     display: none;
+    z-index: 11;
+    overflow-y: hidden; /* Remove the vertical scrollbar */
+    width: 90vw; /* Occupy 90% of the screen width */
+    max-width: 600px; /* But not wider than 600px */
+    max-height: 80vh; /* Occupy at most 80% of the screen height */
+    font-family: 'Press Start 2P', cursive; /* Consistent font */
 }
 
-#leaderboard table {
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse;
+#instructions h2 {
+    font-size: 1.5em; /* Smaller heading */ 
+    color: #e74c3c; /* Consistent heading color */
+    margin-bottom: 15px;
 }
 
-#leaderboard th, #leaderboard td {
-    border: 1px solid #ecf0f1;
-    padding: 8px;
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-.fade-out {
-    animation: fadeOut 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-#notifications {
-    position: fixed; 
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 100;
-}
-
-#countdown {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    font-size: 1.2em;
-    display: none;
-}
-
-.instruction-category {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 2px solid #ecf0f1;
-    border-radius: 8px;
-    background-color: rgba(52, 73, 94, 0.8); 
-    display: none;
-}
-
-.instruction-category h2 {
-    font-size: 1.5em;
-    color: #e74c3c; 
-    margin-bottom: 10px;
-}
-
-.instruction-category p {
-    font-size: 1.1em;
+#instructions p, #instructions li {
+    font-size: 0.9em; /* Smaller paragraph and list item text */
     color: #ecf0f1;
     line-height: 1.6;
+    margin-bottom: 10px; /* Add spacing between paragraphs/list items */
 }
 
-.instruction-category ul {
-    list-style-type: none; 
-    padding: 0;
+#instructions b { /* Style for bold text */
+    color: #f1c40f; /* Example: Yellow for emphasis */
 }
 
-.instruction-category li {
-    margin-bottom: 8px;
+#instructions ul {
+    list-style-type: disc; /* Use bullet points for lists */
+    padding-left: 40px; /* Indent the list */
 }
 
 #instruction-categories {
@@ -293,10 +452,27 @@ body {
     margin-bottom: 20px;
 }
 
+#power-ups {
+    overflow-y: auto; /* Add vertical scroll for this section */
+    max-height: 200px; /* Set a maximum height for the scrollable area */
+}
+
+#power-ups h2 {
+    position: sticky; /* Make the heading sticky */
+    top: 0;
+    background-color: #34495e; /* Match the background color */
+    padding: 10px;
+    z-index: 2; /* Ensure the title is above the scrolling content */
+}
+
+#power-ups > p { /* Select the first paragraph after h2 */
+    margin-top: 20px; /* Add margin to create space after the sticky heading */
+}
+
 .category-button {
     margin: 0 10px;
     padding: 10px 20px;
-    font-size: 1.1em;
+    font-size: 0.8em; /* Smaller button text */
     background-color: #2ecc71;
     color: white;
     border: none;
@@ -309,6 +485,44 @@ body {
     background-color: #27ae60;
 }
 
+.category-button.active {
+    background-color: #27ae60; /* Highlight the active category */
+}
+
+.instruction-category {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    background-color: rgba(52, 73, 94, 0.8);
+    display: none;
+}
+
+.instruction-category.active {
+    display: block; /* Show the active category content */
+}
+
+.instruction-category h2 {
+    font-size: 1.5em;
+    color: #e74c3c;
+    margin-bottom: 10px;
+}
+
+.instruction-category p {
+    font-size: 1em; /* Slightly reduced font size */
+    color: #ecf0f1;
+    line-height: 1.6;
+}
+
+.instruction-category ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.instruction-category li {
+    margin-bottom: 8px;
+}
+
 @media (max-width: 600px) {
     #instruction-categories {
         flex-direction: column;
@@ -318,6 +532,74 @@ body {
     .category-button {
         margin: 10px 0;
     }
+}
+
+/* Leaderboard Styles */
+#leaderboard {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #34495e; /* Dark background */
+    border: 5px solid #ecf0f1; /* Light border */
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+    padding: 20px; /* Adjusted padding */
+    text-align: center;
+    display: none;
+    font-family: 'Press Start 2P', cursive; /* Consistent font */
+    width: 90vw; /* Occupy 90% of the screen width */
+    max-width: 600px; /* But not wider than 600px */
+    max-height: 80vh; /* Occupy at most 80% of the screen height */
+    overflow-y: hidden; /* Remove the vertical scrollbar */ 
+}
+
+#leaderboard h2 {
+    font-size: 1.5em; /* Reduced heading size */
+    color: #e74c3c; /* Reddish heading color */
+    margin-bottom: 20px;
+    position: sticky; /* Make the heading sticky */
+    top: 0; /* Stick it to the top of the leaderboard */
+    background-color: #34495e; /* Match the leaderboard background */
+    padding: 8px; /* Adjusted padding */
+    z-index: 2; /* Ensure it's above the table content */
+}
+
+#leaderboard table {
+    width: 100%; /* Make the table take up the full width of its container */
+    margin-top: 0; /* Remove the original margin to avoid extra space */
+    border-collapse: collapse;
+    table-layout: fixed; /* For equal column widths */
+    font-size: 0.9em; /* Reduced font size */
+}
+
+#leaderboard th, #leaderboard td {
+    border: 2px solid #ecf0f1; /* Thicker, lighter border */
+    padding: 10px; /* Adjusted padding */
+    text-align: center;
+    color: #ecf0f1; /* Light text color */
+}
+
+#leaderboard th {
+    background-color: #2c3e50; /* Darker header background */
+}
+
+#back-to-menu-button { /* Style for the "Back to Menu" button */
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background-color: #2ecc71; /* Green button */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+#back-to-menu-button:hover {
+    background-color: #27ae60; /* Darker green on hover */
+    transform: translateY(-3px);
 }
 
 /* Pause Screen Styles */

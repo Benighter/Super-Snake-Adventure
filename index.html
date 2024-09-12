@@ -17,18 +17,27 @@
         <div id="score">Score: 0</div>
         <div id="boss-health">Boss: 100%</div>
         <div id="power-up">Power: None</div>
+        <div id="power-up-timer"></div> <!-- Timer will be displayed here -->
         <div id="bombs">Bombs: 3</div>
         <div id="countdown"></div>
+        <div id="high-score">High Score: 0</div> 
     </div>
 
     <div id="game-container">
         <canvas id="game-board"></canvas>
-        <div id="power-up-notification" style="display: none;"></div> 
 
         <div id="pause-screen" style="display: none;">
             <h2>Paused</h2>
             <button id="resume-button">Resume</button>
             <button id="quit-button">Quit to Menu</button>
+        </div>
+
+        <div id="name-entry-modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Enter Your Name</h2>
+                <input type="text" id="player-name-input" placeholder="Anonymous">
+                <button id="submit-name-button">Submit</button>
+            </div>
         </div>
     </div>
 
@@ -41,58 +50,61 @@
 
     <div id="instructions">
         <div id="instruction-categories">
-            <button class="category-button" data-target="basic-controls">Basic Controls</button>
+            <button class="category-button active" data-target="basic-controls">Basic Controls</button>
             <button class="category-button" data-target="boss-battle">Boss Battle</button>
             <button class="category-button" data-target="power-ups">Power-Ups</button>
             <button class="category-button" data-target="gameplay">Gameplay</button>
         </div>
-
+    
         <div id="instruction-content">
-            <div id="basic-controls" class="instruction-category">
+            <div id="basic-controls" class="instruction-category active">
                 <h2>Basic Controls</h2>
-                <p><b>Arrow Keys:</b> Control the snake's movement (Up, Down, Left, Right).</p> 
+                <p><b>Arrow Keys:</b> Control the snake's movement (Up, Down, Left, Right).</p>
+                <p><b>Escape:</b> Pause/Resume the game.</p>
             </div>
-
+    
             <div id="boss-battle" class="instruction-category">
                 <h2>Boss Battle</h2>
                 <p><b>Spacebar:</b> Shoot bullets at the boss to inflict damage.</p>
                 <p><b>B Key:</b> Plant a bomb near the boss. Bombs deal significant damage, but you have a limited supply!</p>
             </div>
-
+    
             <div id="power-ups" class="instruction-category">
                 <h2>Power-Ups</h2>
                 <p>Collect power-ups to gain temporary advantages! Here's what each power-up does:</p>
                 <ul>
                     <li><b>Invincibility (Yellow):</b> Makes you temporarily immune to collisions.</li>
                     <li><b>Freeze (Blue):</b> Freezes the boss in place.</li>
-                    </ul>
+                    <li><b>Reduce Size 50% (Green):</b> Reduces the snake's length by 50%.</li>
+                    <li><b>Reduce Size 80% (Purple):</b> Reduces the snake's length by 80%.</li>
+                    <li><b>Machine Gun (Orange):</b> Enables rapid-fire shooting by holding down the Spacebar.</li>
+                </ul>
                 <p><b>X Key:</b> Activate the currently held power-up.</p>
             </div>
-
+    
             <div id="gameplay" class="instruction-category">
                 <h2>Gameplay</h2>
-                <p>Eat the food to grow longer and increase your score.</p> 
+                <p>Eat the food to grow longer and increase your score.</p>
                 <p>Avoid colliding with yourself, the walls, or the boss.</p>
                 <p>Defeat bosses to earn bonus points and power-ups.</p>
+                <p>Use power-ups strategically to survive longer and achieve higher scores.</p>
             </div>
         </div>
-
-        <button id="back-to-menu-button-from-instructions">Back to Menu</button>
     </div>
 
     <div id="leaderboard">
         <h2>Leaderboard</h2>
-        <table id="leaderboard-table">
+        <table id="leaderboard-table"> 
             <thead>
                 <tr>
                     <th>Rank</th>
+                    <th>Name</th>
                     <th>Score</th>
                 </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
-        <button id="back-to-menu-button">Back to Menu</button>
     </div>
 
     <script src="app.js"></script>
