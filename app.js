@@ -32,12 +32,22 @@ let consecutiveBossDefeats = 0;
 let bossSpawnLocation;
 
 const powers = [
-    { type: 'invincibility', color: '#f1c40f', duration: 10000 },
-    { type: 'freeze', color: '#3498db', duration: 5000 },
-    { type: 'reduce_size_50', color: '#27ae60', duration: 0 },
-    { type: 'reduce_size_80', color: '#9b59b6', duration: 0 },
-    { type: 'machine_gun', color: '#FF4500', duration: 10000 }
+    { type: 'invincibility', image: 'images/invisible.png', duration: 10000 },
+    { type: 'freeze', image: 'images/freeze.png', duration: 5000 },
+    { type: 'reduce_size_50', image: 'images/reduce-size-50.png', duration: 0 },
+    { type: 'reduce_size_80', image: 'images/reduce-size-80.png', duration: 0 },
+    { type: 'machine_gun', image: 'images/machine-gun.png', duration: 10000 }
 ];
+
+// Preload images
+const foodImage = new Image();
+foodImage.src = 'images/food.png';
+const bossImage = new Image();
+bossImage.src = 'images/boss.png';
+const bulletImage = new Image();
+bulletImage.src = 'images/bullet.png';
+const bombImage = new Image();
+bombImage.src = 'images/bomb.png';
 
 // --- Audio Context Initialization ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -213,136 +223,36 @@ function drawSnake() {
 
 function drawFood() {
     ctx.clearRect(food.x, food.y, GRID_SIZE, GRID_SIZE);
-
-    const svgString = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${GRID_SIZE}" height="${GRID_SIZE}">
-        <ellipse cx="50" cy="60" rx="30" ry="20" fill="#A9A9A9"/>
-        <circle cx="75" cy="50" r="15" fill="#A9A9A9"/>
-        <circle cx="70" cy="38" r="7" fill="#FFC0CB"/>
-        <circle cx="80" cy="38" r="7" fill="#FFC0CB"/>
-        <circle cx="80" cy="48" r="3" fill="black"/>
-        <circle cx="88" cy="50" r="3" fill="#FFA07A"/>
-        <path d="M20,60 Q10,70 5,50" stroke="#A9A9A9" stroke-width="5" fill="none"/>
-        <line x1="85" y1="45" x2="95" y2="40" stroke="black" stroke-width="1"/>
-        <line x1="85" y1="50" x2="95" y2="50" stroke="black" stroke-width="1"/>
-        <line x1="85" y1="55" x2="95" y2="60" stroke="black" stroke-width="1"/>
-        <circle cx="40" cy="55" r="8" fill="white" opacity="0.3"/>
-    </svg>`;
-
-    const img = new Image();
-    img.onload = () => {
-        ctx.drawImage(img, food.x, food.y);
-    };
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+    ctx.drawImage(foodImage, food.x, food.y, GRID_SIZE, GRID_SIZE);
 }
 
 function drawBoss() {
     if (boss) {
         ctx.clearRect(boss.x, boss.y, GRID_SIZE * 2, GRID_SIZE * 2);
-
-        const svgString = `
-        <svg width="${GRID_SIZE * 2}" height="${GRID_SIZE * 2}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <g transform="translate(50, 50)">
-            <ellipse cx="0" cy="0" rx="40" ry="30" fill="#333"/>
-            <polygon points="-40,0 -30,-15 -20,0" fill="#666"/>
-            <polygon points="-20,0 -10,-15 0,0" fill="#666"/>
-            <polygon points="0,0 10,-15 20,0" fill="#666"/>
-            <polygon points="20,0 30,-15 40,0" fill="#666"/>
-            <ellipse cx="0" cy="-40" rx="20" ry="15" fill="#333"/>
-            <circle cx="-10" cy="-45" r="5" fill="#f00"/>
-            <circle cx="10" cy="-45" r="5" fill="#f00"/>
-            <circle cx="-10" cy="-45" r="2" fill="#000"/>
-            <circle cx="10" cy="-45" r="2" fill="#000"/>
-            <path d="M -15 -35 A 10 10 0 0 1 15 -35" stroke="#f00" stroke-width="3" fill="none"/>
-            <line x1="-10" y1="-30" x2="-5" y2="-25" stroke="#f00" stroke-width="2"/>
-            <line x1="10" y1="-30" x2="5" y2="-25" stroke="#f00" stroke-width="2"/>
-            <polygon points="-15,-35 -12,-30 -10,-35" fill="#fff"/>
-            <polygon points="-10,-35 -7,-30 -5,-35" fill="#fff"/>
-            <polygon points="-5,-35 -2,-30 0,-35" fill="#fff"/>
-            <polygon points="0,-35 2,-30 5,-35" fill="#fff"/>
-            <polygon points="5,-35 7,-30 10,-35" fill="#fff"/>
-            <polygon points="10,-35 12,-30 15,-35" fill="#fff"/>
-            <path d="M -40 10 Q -30 20 -20 10" stroke="#666" stroke-width="5" fill="none"/>
-            <path d="M -20 10 Q -10 20 0 10" stroke="#666" stroke-width="5" fill="none"/>
-            <path d="M 0 10 Q 10 20 20 10" stroke="#666" stroke-width="5" fill="none"/>
-            <path d="M 20 10 Q 30 20 40 10" stroke="#666" stroke-width="5" fill="none"/>
-            <ellipse cx="0" cy="15" rx="30" ry="10" fill="#000" opacity="0.3"/>
-          </g>
-        </svg>`;
-
-        const img = new Image();
-        img.onload = () => {
-            ctx.drawImage(img, boss.x, boss.y);
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+        ctx.drawImage(bossImage, boss.x, boss.y, GRID_SIZE * 2, GRID_SIZE * 2);
     }
 }
 
 function drawBullets() {
     bullets.forEach(bullet => {
         ctx.clearRect(bullet.x, bullet.y, GRID_SIZE, GRID_SIZE); // Clear previous bullet
-
-        // Draw the new SVG bullet
-        const svgString = `
-        <svg width="${GRID_SIZE}" height="${GRID_SIZE}" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <radialGradient id="bulletGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#f8d766" stop-opacity="1"/>
-                    <stop offset="100%" stop-color="#f5b041" stop-opacity="0"/>
-                </radialGradient>
-                <linearGradient id="fireTrail" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#f0932b" />
-                    <stop offset="30%" stop-color="#ed7f11" />
-                    <stop offset="70%" stop-color="#e56b0f" />
-                    <stop offset="100%" stop-color="#d6550c" />
-                </linearGradient>
-            </defs>
-            <g transform="translate(30, 30)">
-                <path d="M -15 -3 L -3 -3 L 0 -10 L 3 -3 L 15 -3 L 10 3 L 3 10 L 0 15 L -3 10 L -10 3 Z" 
-                      fill="url(#fireTrail)" stroke="#e67e22" stroke-width="1"/>
-                <circle cx="0" cy="0" r="10" fill="#d35400" stroke="#e67e22" stroke-width="2" />
-                <circle cx="0" cy="0" r="5" fill="#e74c3c" />
-                <circle cx="0" cy="0" r="18" fill="url(#bulletGlow)" /> 
-            </g>
-        </svg>`;
-
-        const img = new Image();
-        img.onload = () => {
-            ctx.drawImage(img, bullet.x, bullet.y);
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+        ctx.drawImage(bulletImage, bullet.x, bullet.y, GRID_SIZE, GRID_SIZE);
     });
 }
 
 function drawPowerUps() {
     powerUps.forEach(powerUp => {
-        ctx.fillStyle = powerUp.color;
-        ctx.beginPath();
-        ctx.arc(powerUp.x + GRID_SIZE / 2, powerUp.y + GRID_SIZE / 2, GRID_SIZE / 2, 0, 2 * Math.PI);
-        ctx.fill();
+        const img = new Image();
+        img.src = powerUp.image; 
+        img.onload = () => {
+            ctx.drawImage(img, powerUp.x, powerUp.y, GRID_SIZE, GRID_SIZE);
+        };
     });
 }
 
 function drawPlantedBombs() {
     plantedBombs.forEach(bomb => {
-        const img = new Image();
-        img.onload = () => {
-            ctx.drawImage(img, bomb.x, bomb.y);
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(`
-            <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <g transform="translate(10,10)">
-                <ellipse cx="0" cy="0" rx="8" ry="6" fill="#333" stroke="#000" stroke-width="1"/>
-                <path d="M -1 -5 L 1 -5 L 0 -8 Z" fill="#f00"/>
-                <circle cx="0" cy="-5" r="2" fill="#f00" stroke="#000" stroke-width="1"/>
-                <path d="M -6 -2 A 2 2 0 0 1 -6 2" stroke="#fff" stroke-width="1" fill="none"/>
-                <path d="M -3 -2 A 2 2 0 0 1 -3 2" stroke="#fff" stroke-width="1" fill="none"/>
-                <path d="M 0 -2 A 2 2 0 0 1 0 2" stroke="#fff" stroke-width="1" fill="none"/>
-                <path d="M 3 -2 A 2 2 0 0 1 3 2" stroke="#fff" stroke-width="1" fill="none"/>
-                <path d="M 6 -2 A 2 2 0 0 1 6 2" stroke="#fff" stroke-width="1" fill="none"/>
-              </g>
-            </svg>
-        `);
+        ctx.drawImage(bombImage, bomb.x, bomb.y, GRID_SIZE, GRID_SIZE);
     });
 }
 
@@ -519,7 +429,7 @@ function defeatedBoss() {
         x: getRandomPosition().x,
         y: getRandomPosition().y,
         type: 'reduce_size_50',
-        color: '#27ae60',
+        image: 'images/reduce-size-50.png',
         amount: reductionAmount50
     });
 
@@ -530,7 +440,7 @@ function defeatedBoss() {
             x: getRandomPosition().x,
             y: getRandomPosition().y,
             type: 'reduce_size_80',
-            color: '#9b59b6',
+            image: 'images/reduce-size-80.png',
             amount: reductionAmount80
         });
         consecutiveBossDefeats = 0;
@@ -545,7 +455,7 @@ function defeatedBoss() {
             x: bomb.x,
             y: bomb.y,
             type: 'bomb',
-            color: '#f39c12'
+            image: 'images/bomb.png'
         });
     });
     plantedBombs = [];
@@ -612,7 +522,7 @@ function spawnPowerUp(specificType = null) {
         type: powerUpType
     };
     if (powerUpType !== 'bomb') {
-        powerUp.color = powers.find(p => p.type === powerUpType).color;
+        powerUp.image = powers.find(p => p.type === powerUpType).image;
     }
 
     // Add a timeout to remove the power-up after 5 seconds
@@ -778,7 +688,7 @@ function updatePowerLabel(powerType = null, time = null) {
     if (powerType) {
         const powerUpObject = powers.find(p => p.type === powerType);
         powerUpLabel.innerText = `Power: ${powerUpObject.type}`;
-        powerUpLabel.style.color = powerUpObject.color;
+        //powerUpLabel.style.color = powerUpObject.color;
 
         // Update the timer label (if applicable)
         if (time !== null) {
